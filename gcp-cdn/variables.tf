@@ -1,7 +1,11 @@
 variable "domain" {
   description = "The domain name for the Firebase Hosting site."
   type        = string
-  default     = ""
+}
+
+variable "bucket_name" {
+  description = "The name of the GCP bucket where the static files are stored."
+  type        = string
 }
 
 variable "project_id" {

@@ -12,17 +12,13 @@ resource "google_project_service" "default" {
 
   service            = each.key
   disable_on_destroy = false
-  project            = var.gcp_project_id
+  project            = var.project_id
 }
 
 // AUTHENTICATION ----------------------------------------------------------------------------------------
-import {
-  id = "projects/${var.gcp_project_id}"
-  to = google_identity_platform_config.default
-}
 resource "google_identity_platform_config" "default" {
   provider = google-beta
-  project  = var.gcp_project_id
+  project  = var.project_id
 
   depends_on = [google_project_service.default]
 
@@ -44,7 +40,7 @@ resource "google_identity_platform_config" "default" {
 
   authorized_domains = flatten([
     "localhost",
-    "${var.gcp_project_id}.web.app",
+    "${var.project_id}.web.app",
     var.domain == "" ? [] : [var.domain],
   ])
 }
@@ -52,7 +48,7 @@ resource "google_identity_platform_config" "default" {
 // FIRESTORE DATABASE ----------------------------------------------------------------------------------------
 
 resource "google_firebaserules_ruleset" "firestore" {
-  project = var.gcp_project_id
+  project = var.project_id
   source {
     files {
       name    = "firestore.rules"
@@ -66,7 +62,7 @@ resource "google_firebaserules_ruleset" "firestore" {
 resource "google_firebaserules_release" "firestore" {
   name         = "cloud.firestore" # must be cloud.firestore
   ruleset_name = google_firebaserules_ruleset.firestore.name
-  project      = var.gcp_project_id
+  project      = var.project_id
 
   # Wait for Firestore to be provisioned before releasing the ruleset.
   depends_on = [google_app_engine_application.default]
@@ -84,13 +80,9 @@ resource "google_firebaserules_release" "firestore" {
  * App Engine creates a default bucket when you create an app. This bucket provides the first 5GB of storage 
  * for free and includes a free quota for Cloud Storage I/O operations. 
 */
-import {
-  id = var.gcp_project_id
-  to = google_app_engine_application.default
-}
 resource "google_app_engine_application" "default" {
 
-  project       = var.gcp_project_id
+  project       = var.project_id
   location_id   = var.gcp_region
   database_type = "CLOUD_FIRESTORE"
 
@@ -101,13 +93,13 @@ resource "google_app_engine_application" "default" {
 
 resource "google_firebase_storage_bucket" "default-bucket" {
   provider  = google-beta
-  project   = var.gcp_project_id
+  project   = var.project_id
   bucket_id = google_app_engine_application.default.default_bucket
 }
 
 resource "google_firebaserules_ruleset" "storage" {
   provider = google-beta
-  project  = var.gcp_project_id
+  project  = var.project_id
   source {
     files {
       name    = "storage.rules"
@@ -120,8 +112,8 @@ resource "google_firebaserules_ruleset" "storage" {
 
 resource "google_firebaserules_release" "default-bucket" {
   name         = "firebase.storage/${google_app_engine_application.default.default_bucket}"
-  ruleset_name = "projects/${var.gcp_project_id}/rulesets/${google_firebaserules_ruleset.storage.name}"
-  project      = var.gcp_project_id
+  ruleset_name = "projects/${var.project_id}/rulesets/${google_firebaserules_ruleset.storage.name}"
+  project      = var.project_id
 
   lifecycle {
     replace_triggered_by = [

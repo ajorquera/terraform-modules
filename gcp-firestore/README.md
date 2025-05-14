@@ -27,7 +27,7 @@ This Terraform module provisions and configures a Firestore database along with 
 module "firestore" {
   source = "https://github.com/ajorquera/terraform-modules/dcp-firestore.git"
 
-  gcp_project_id = "your-gcp-project-id"
+  project_id = "your-gcp-project-id"
   
   # optional
   gcp_region     = "us-central"

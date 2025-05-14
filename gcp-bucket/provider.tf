@@ -9,7 +9,7 @@ terraform {
 
 provider "google-beta" {
   project               = var.project_id
-  region                = var.gcp_region
+  region                = var.region
   billing_project       = var.project_id
   user_project_override = true
 }
